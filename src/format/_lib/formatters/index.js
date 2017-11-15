@@ -3,6 +3,151 @@ import getUTCISOWeek from '../../../_lib/getUTCISOWeek/index.js'
 import getUTCISOWeekYear from '../../../_lib/getUTCISOWeekYear/index.js'
 
 var formatters = {
+  // Era
+  G: function (pattern, date, localize) {
+    var era = date.getUTCFullYear() > 0 ? 1 : -1
+    switch (pattern) {
+      // AD, BC
+      case 'G':
+      case 'GG':
+      case 'GGG':
+        return localize.era(era, {type: 'short'})
+      // A, B
+      case 'GGGGG':
+        return localize.era(era, {type: 'narrow'})
+      // Anno Domini, Before Christ
+      case 'GGGG':
+      default:
+        return localize.era(era, {type: 'long'})
+    }
+  },
+
+  // Year
+  y: function (pattern, date, localize) {
+    // From http://www.unicode.org/reports/tr35/tr35-31/tr35-dates.html#Date_Format_Patterns
+    // | Year     |     y | yy |   yyy |  yyyy | yyyyy |
+    // |----------|-------|----|-------|-------|-------|
+    // | AD 1     |     1 | 01 |   001 |  0001 | 00001 |
+    // | AD 12    |    12 | 12 |   012 |  0012 | 00012 |
+    // | AD 123   |   123 | 23 |   123 |  0123 | 00123 |
+    // | AD 1234  |  1234 | 34 |  1234 |  1234 | 01234 |
+    // | AD 12345 | 12345 | 45 | 12345 | 12345 | 12345 |
+
+    var signedYear = date.getUTCFullYear()
+
+    // Returns 1 for 1 BC (which is year 0 in JavaScript)
+    var year = signedYear > 0 ? signedYear : 1 - signedYear
+
+    // Two digit year
+    if (pattern.length === 2) {
+      return addLeadingZeros(year, 4).substr(2)
+    }
+
+    // Padding
+    return addLeadingZeros(year, pattern.length)
+  },
+
+  // ISO week-numbering year
+  // TODO: could be locale specific week-numbering year instead of ISO 8601 week year
+  Y: function (pattern, date, localize) {
+    var isoWeekYear = getUTCISOWeekYear(date)
+
+    // Two digit year
+    if (pattern.length === 2) {
+      return addLeadingZeros(isoWeekYear, 4).substr(2)
+    }
+
+    // Padding
+    return addLeadingZeros(isoWeekYear, pattern.length)
+  },
+
+  // Extended year. This is a single number designating the year of this calendar system.
+  // The main difference between `y` and `u` localizers are B.C. years:
+  // | Year |  y |  u |
+  // |------|----|----|
+  // | AC 1 |  1 |  1 |
+  // | BC 1 |  1 |  0 |
+  // | BC 2 |  2 | -1 |
+  // Also `yy` always returns two digits, while `uu` pads single digit years
+  // to 2 characters and returns other years unchanged.
+  u: function (pattern, date, localize) {
+    var year = date.getUTCFullYear()
+    var sign = year >= 0 ? '' : '-'
+    return sign + addLeadingZeros(Math.abs(year), pattern.length)
+  },
+
+  // TODO: `U` - cyclic year
+
+  // Quarter
+  Q: function (pattern, date, localize) {
+    var quarter = Math.ceil((date.getUTCMonth() + 1) / 3)
+    switch (pattern) {
+      // 1, 2, 3, 4
+      case 'Q':
+        return quarter
+      // 01, 02, 03, 04
+      case 'QQ':
+        addLeadingZeros(quarter, 2)
+      // Q1, Q2, Q3, Q4
+      case 'QQQ':
+        return localize.quarter(era, {type: 'short'})
+      // 1st quarter, 2nd quarter, ...
+      case 'QQQQ':
+      default:
+        return localize.quarter(era, {type: 'long'})
+    }
+  },
+
+  // TODO: `q` - stand-alone quarter
+
+  // Month
+  M: function (pattern, date, localize) {
+    var month = date.getUTCMonth()
+    switch (pattern) {
+      // 1, 2, ..., 12
+      case 'M':
+        return month + 1
+      // 01, 02, ..., 12
+      case 'MM':
+        addLeadingZeros(month + 1, 2)
+      // Jan, Feb, ..., Dec
+      case 'MMM':
+        return localize.month(era, {type: 'short'})
+      // J, F, ..., D
+      case 'GGGGG':
+        return localize.month(era, {type: 'narrow'})
+      // January, February, ..., December
+      case 'MMMM':
+      default:
+        return localize.month(era, {type: 'long'})
+    }
+  },
+
+  // TODO: `L` - stand-alone month
+
+  // ISO week
+  // TODO: could be locale specific week instead of ISO 8601 week
+  w: function (pattern, date, localize) {
+    var isoWeek = getUTCISOWeek(date)
+    return addLeadingZeros(isoWeek, pattern.length)
+  },
+
+  // TODO: `W` - week of month
+
+  // Day of the month
+  d: function (pattern, date, localize) {
+    var dayOfMonth = date.getUTCDate()
+    return addLeadingZeros(dayOfMonth, pattern.length)
+  },
+
+  // Day of year
+  D: function (pattern, date, localize) {
+    var dayOfYear = getUTCDayOfYear(date)
+    return addLeadingZeros(dayOfYear, pattern.length)
+  },
+}
+
+var formatters = {
   // Month: 1, 2, ..., 12
   'M': function (date) {
     return date.getUTCMonth() + 1
@@ -113,26 +258,6 @@ var formatters = {
   // ISO week: 01, 02, ..., 53
   'WW': function (date) {
     return addLeadingZeros(getUTCISOWeek(date), 2)
-  },
-
-  // Year: 00, 01, ..., 99
-  'YY': function (date) {
-    return addLeadingZeros(date.getUTCFullYear(), 4).substr(2)
-  },
-
-  // Year: 1900, 1901, ..., 2099
-  'YYYY': function (date) {
-    return addLeadingZeros(date.getUTCFullYear(), 4)
-  },
-
-  // ISO week-numbering year: 00, 01, ..., 99
-  'GG': function (date) {
-    return String(getUTCISOWeekYear(date)).substr(2)
-  },
-
-  // ISO week-numbering year: 1900, 1901, ..., 2099
-  'GGGG': function (date) {
-    return getUTCISOWeekYear(date)
   },
 
   // Hour: 0, 1, ... 23

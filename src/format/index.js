@@ -5,8 +5,18 @@ import formatters from './_lib/formatters/index.js'
 import cloneObject from '../_lib/cloneObject/index.js'
 import addUTCMinutes from '../_lib/addUTCMinutes/index.js'
 
-var longFormattingTokensRegExp = /(\[[^[]*])|(\\)?(LTS|LT|LLLL|LLL|LL|L|llll|lll|ll|l)/g
-var defaultFormattingTokensRegExp = /(\[[^[]*])|(\\)?(x|ss|s|mm|m|hh|h|do|dddd|ddd|dd|d|aa|a|ZZ|Z|YYYY|YY|X|Wo|WW|W|SSS|SS|S|Qo|Q|Mo|MMMM|MMM|MM|M|HH|H|GGGG|GG|E|Do|DDDo|DDDD|DDD|DD|D|A|.)/g
+// This RegExp consists of three parts separated by `|`:
+// - `(\w)\1+o?` matches any 2 or more occurences of the same letter
+//   with an optional `o` character at the end
+// - `'(''|[^'])+('|$)` matches anything surrounded by two quote characters (`),
+//   except a single quote symbol, which ends the sequence.
+//   Two quote characters do not end the sequence.
+//   If there is no matching single quote
+//   then the sequence will continue until the end of the string.
+// - `.` matches any single character unmatched by previous parts of the RegExps
+var formattingTokensRegExp = /(\w)\1+o?|'(''|[^'])+('|$)|./g
+
+var escapedStringRegExp = /'?(.*)('|$)/
 
 /**
  * @name format
@@ -121,14 +131,6 @@ export default function format (dirtyDate, dirtyFormatStr, dirtyOptions) {
     throw new RangeError('locale must contain localize property')
   }
 
-  if (!locale.formatLong) {
-    throw new RangeError('locale must contain formatLong property')
-  }
-
-  var localeFormatters = locale.formatters || {}
-  var formattingTokensRegExp = locale.formattingTokensRegExp || defaultFormattingTokensRegExp
-  var formatLong = locale.formatLong
-
   var originalDate = toDate(dirtyDate, options)
 
   if (!isValid(originalDate, options)) {
@@ -143,41 +145,27 @@ export default function format (dirtyDate, dirtyFormatStr, dirtyOptions) {
 
   var formatterOptions = cloneObject(options)
   formatterOptions.locale = locale
-  formatterOptions.formatters = formatters
+  formatterOptions.originalDate = originalDate
 
-  // When UTC functions will be implemented, options._originalDate will likely be a part of public API.
-  // Right now, please don't use it in locales. If you have to use an original date,
-  // please restore it from `date`, adding a timezone offset to it.
-  formatterOptions._originalDate = originalDate
-
-  var result = formatStr
-    .replace(longFormattingTokensRegExp, function (substring) {
-      if (substring[0] === '[') {
-        return substring
-      }
-
-      if (substring[0] === '\\') {
+  var result = formatStr.match(formattingTokensRegExp)
+    .map(function (substring) {
+      var firstCharacter = substring[0]
+      if (firstCharacter === "'") {
         return cleanEscapedString(substring)
       }
 
-      return formatLong(substring)
-    })
-    .replace(formattingTokensRegExp, function (substring) {
-      var formatter = localeFormatters[substring] || formatters[substring]
-
+      var formatter = formatters[firstCharacter]
       if (formatter) {
-        return formatter(utcDate, formatterOptions)
-      } else {
-        return cleanEscapedString(substring)
+        formatter(pattern, date, locale.localize)
       }
+
+      return substring
     })
+    .join('')
 
   return result
 }
 
 function cleanEscapedString (input) {
-  if (input.match(/\[[\s\S]/)) {
-    return input.replace(/^\[|]$/g, '')
-  }
-  return input.replace(/\\/g, '')
+  return input.match(escapedStringRegExp)[1]
 }
