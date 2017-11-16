@@ -2,6 +2,39 @@ import getUTCDayOfYear from '../../../_lib/getUTCDayOfYear/index.js'
 import getUTCISOWeek from '../../../_lib/getUTCISOWeek/index.js'
 import getUTCISOWeekYear from '../../../_lib/getUTCISOWeekYear/index.js'
 
+/*
+ * |     | Unit                           |     | Unit                         |
+ * |-----|--------------------------------|-----|------------------------------|
+ * |  a  | AM or PM                       |  A* | Milliseconds in day          |
+ * |  b  |                                |  B  |                              |
+ * |  c  | Stand-alone local day of week  |  C  |                              |
+ * |  d  | Day of month                   |  D  | Day of year                  |
+ * |  e  | Local day of week              |  E  | Day of week                  |
+ * |  f  |                                |  F* | Day of week in month         |
+ * |  g  | Modified Julian day            |  G  | Era                          |
+ * |  h  | Hour [1-12]                    |  H  | Hour [0-23]                  |
+ * |  i  |                                |  I  |                              |
+ * |  j* | (nothing - not used in format) |  J  |                              |
+ * |  k* | Hour [1-24]                    |  K* | Hour [0-11]                  |
+ * |  l* | (nothing - deprecated)         |  L* | Stand-alone month            |
+ * |  m  | Minute                         |  M  | Month                        |
+ * |  n  |                                |  N  |                              |
+ * |  o  |                                |  O* | Timezone (GMT)               |
+ * |  p  |                                |  P  |                              |
+ * |  q* | Stand-alone quarter            |  Q  | Quarter                      |
+ * |  r  |                                |  R  |                              |
+ * |  s  | Second                         |  S  | Fractional second            |
+ * |  t  |                                |  T  |                              |
+ * |  u  | Extended year                  |  U* | Cyclic year                  |
+ * |  v* | Timezone (generic non-locat.)  |  V* | Timezone (location)          |
+ * |  w  | Week of year                   |  W* | Week of month                |
+ * |  x  | Timezone (ISO-8601 w/o Z)      |  X* | Timezone (ISO-8601)          |
+ * |  y  | Year (abs)                     |  Y  | ISO week year                |
+ * |  z* | Timezone (specific non-locat.) |  Z* | Timezone (aliases)           |
+ *
+ * Letters marked by * are not implemented but reserved by Unicode standard
+ */
+
 var formatters = {
   // Era
   G: function (pattern, date, localize) {
@@ -145,6 +178,8 @@ var formatters = {
     var dayOfYear = getUTCDayOfYear(date)
     return addLeadingZeros(dayOfYear, pattern.length)
   },
+
+  // TODO: `F` - day of week in month (e.g. 2nd Wed in July)
 }
 
 var formatters = {
