@@ -15,16 +15,16 @@ import getUTCISOWeekYear from '../../../_lib/getUTCISOWeekYear/index.js'
  * |  h  | Hour [1-12]                    |  H  | Hour [0-23]                  |
  * |  i  |                                |  I  |                              |
  * |  j* | (nothing - not used in format) |  J  |                              |
- * |  k* | Hour [1-24]                    |  K* | Hour [0-11]                  |
+ * |  k  | Hour [1-24]                    |  K  | Hour [0-11]                  |
  * |  l* | (nothing - deprecated)         |  L* | Stand-alone month            |
  * |  m  | Minute                         |  M  | Month                        |
  * |  n  |                                |  N  |                              |
- * |  o  |                                |  O* | Timezone (GMT)               |
+ * |  o! | Ordinal number modifier        |  O* | Timezone (GMT)               |
  * |  p  |                                |  P  |                              |
  * |  q* | Stand-alone quarter            |  Q  | Quarter                      |
  * |  r  |                                |  R  |                              |
  * |  s  | Second                         |  S  | Fractional second            |
- * |  t  |                                |  T  |                              |
+ * |  t! | Seconds timestamp              |  T! | Milliseconds timestamp       |
  * |  u  | Extended year                  |  U* | Cyclic year                  |
  * |  v* | Timezone (generic non-locat.)  |  V* | Timezone (location)          |
  * |  w  | ISO week of year               |  W* | Week of month                |
@@ -32,7 +32,10 @@ import getUTCISOWeekYear from '../../../_lib/getUTCISOWeekYear/index.js'
  * |  y  | Year (abs)                     |  Y  | ISO week-numbering year      |
  * |  z* | Timezone (specific non-locat.) |  Z* | Timezone (aliases)           |
  *
- * Letters marked by * are not implemented but reserved by Unicode standard
+ * Letters marked by * are not implemented but reserved by Unicode standard.
+ *
+ * Letters marked by ! are non-standard, but implemented by date-fns.
+ * They could be changed in a future major release.
  */
 
 var formatters = {
@@ -56,7 +59,7 @@ var formatters = {
   },
 
   // Year
-  y: function (pattern, date, localize) {
+  y: function (pattern, date, localize, options) {
     // From http://www.unicode.org/reports/tr35/tr35-31/tr35-dates.html#Date_Format_Patterns
     // | Year     |     y | yy |   yyy |  yyyy | yyyyy |
     // |----------|-------|----|-------|-------|-------|
@@ -81,8 +84,8 @@ var formatters = {
   },
 
   // ISO week-numbering year
-  Y: function (pattern, date, localize) {
-    var isoWeekYear = getUTCISOWeekYear(date)
+  Y: function (pattern, date, localize, options) {
+    var isoWeekYear = getUTCISOWeekYear(date, options)
 
     // Two digit year
     if (pattern.length === 2) {
@@ -167,8 +170,8 @@ var formatters = {
   // },
 
   // ISO week of year
-  w: function (pattern, date, localize) {
-    var isoWeek = getUTCISOWeek(date)
+  w: function (pattern, date, localize, options) {
+    var isoWeek = getUTCISOWeek(date, options)
     return addLeadingZeros(isoWeek, pattern.length)
   },
 
@@ -184,8 +187,8 @@ var formatters = {
   },
 
   // Day of year
-  D: function (pattern, date, localize) {
-    var dayOfYear = getUTCDayOfYear(date)
+  D: function (pattern, date, localize, options) {
+    var dayOfYear = getUTCDayOfYear(date, options)
     return addLeadingZeros(dayOfYear, pattern.length)
   },
 
@@ -215,6 +218,186 @@ var formatters = {
       default:
         return localize.month(era, {type: 'long'})
     }
+  },
+
+  // TODO: Local day of week
+  // e: function (pattern, date, localize) {
+  //
+  // },
+
+  // TODO: Stand-alone local day of week
+  // c: function (pattern, date, localize) {
+  //
+  // },
+
+  // AM or PM
+  a: function (pattern, date, localize) {
+    var hours = date.getUTCHours()
+    return localize.timeOfDay(hours, {type: 'uppercase'})
+  },
+
+  // Hour [1-12]
+  h: function (pattern, date, localize) {
+    var hours = date.getUTCHours() % 12
+
+    if (hours === 0) {
+      hours = 12
+    }
+
+    return addLeadingZeros(hours, pattern.length)
+  },
+
+  // Hour [0-23]
+  H: function (pattern, date, localize) {
+    var hours = date.getUTCHours()
+    return addLeadingZeros(hours, pattern.length)
+  },
+
+  // Hour [0-11]
+  K: function (pattern, date, localize) {
+    var hours = date.getUTCHours() % 12
+    return addLeadingZeros(hours, pattern.length)
+  },
+
+  // Hour [1-24]
+  k: function (pattern, date, localize) {
+    var hours = date.getUTCHours()
+
+    if (hours === 0) {
+      hours = 24
+    }
+
+    return addLeadingZeros(hours, pattern.length)
+  },
+
+  // Minute
+  m: function (pattern, date, localize) {
+    var minutes = date.getUTCMinutes()
+    return addLeadingZeros(minutes, pattern.length)
+  },
+
+  // Second
+  s: function (pattern, date, localize) {
+    var seconds = date.getUTCSeconds()
+    return addLeadingZeros(seconds, pattern.length)
+  },
+
+  // Fractional second
+  S: function (pattern, date, localize) {
+    var numberOfDigits = pattern.length
+    var milliseconds = date.getUTCMilliseconds()
+    var fractionalSeconds = Math.floor(milliseconds * Math.pow(10, numberOfDigits - 3))
+    return addLeadingZeros(fractionalSeconds, numberOfDigits.length)
+  },
+
+  // TODO: Milliseconds in day
+  // A: function (pattern, date, localize) {
+  //
+  // },
+
+  // TODO: Timezone (specific non-location formats)
+  // z: function (pattern, date, localize) {
+  //
+  // },
+
+  // TODO: Timezone (misc.)
+  // Z: function (pattern, date, localize) {
+  //
+  // },
+
+  // TODO: Timezone (GMT)
+  // O: function (pattern, date, localize) {
+  //
+  // },
+
+  // TODO: Timezone (generic non-location formats)
+  // v: function (pattern, date, localize) {
+  //
+  // },
+
+  // TODO: Timezone (location formats)
+  // V: function (pattern, date, localize) {
+  //
+  // },
+
+  // Timezone (ISO-8601. If offset is 0, output is always `'Z'`)
+  X: function (pattern, date, localize) {
+    var originalDate = options._originalDate || date
+    var timezoneOffset = originalData.getTimezoneOffset()
+
+    if (timezoneOffset === 0) {
+      return 'Z'
+    }
+
+    switch (pattern) {
+      // Hours and optional minutes
+      case 'X':
+        if (timezoneOffset % 60 === 0) {
+          return addLeadingZeros(timezoneOffset / 60, 2)
+        }
+        return formatTimezone(timezoneOffset)
+
+      // Hours and minutes without `:` delimeter
+      case 'XX':
+      // Hours, minutes and optional seconds without `:` delimeter
+      // Note: neither ISO-8601 nor JavaScript supports seconds in timezone offsets
+      // so this pattern has the same output as `XX`
+      case 'XXXX':
+        return formatTimezone(timezoneOffset)
+
+      // Hours and minutes with `:` delimeter
+      case 'XXX':
+      // Hours, minutes and optional seconds with `:` delimeter
+      case 'XXXXX':
+      default:
+        return formatTimezone(timezoneOffse, ':')
+    }
+  },
+
+  // Timezone (ISO-8601. If offset is 0, output is `'+00:00'` or equivalent)
+  x: function (pattern, date, localize) {
+    var originalDate = options._originalDate || date
+    var timezoneOffset = originalData.getTimezoneOffset()
+
+    switch (pattern) {
+      // Hours and optional minutes
+      case 'X':
+        if (timezoneOffset % 60 === 0) {
+          return addLeadingZeros(timezoneOffset / 60, 2)
+        }
+        return formatTimezone(timezoneOffset)
+
+      // Hours and minutes without `:` delimeter
+      case 'XX':
+      // Hours, minutes and optional seconds without `:` delimeter
+      // Note: neither ISO-8601 nor JavaScript supports seconds in timezone offsets
+      // so this pattern has the same output as `XX`
+      case 'XXXX':
+        return formatTimezone(timezoneOffset)
+
+      // Hours and minutes with `:` delimeter
+      case 'XXX':
+      // Hours, minutes and optional seconds with `:` delimeter
+      case 'XXXXX':
+      default:
+        return formatTimezone(timezoneOffse, ':')
+    }
+  },
+
+  // Non-standard
+
+  // Seconds timestamp
+  t: function (pattern, date, localize, options) {
+    var originalDate = options._originalDate || date
+    var timestamp = Math.floor(originalDate.getTime() / 1000)
+    return addLeadingZeros(seconds, pattern.length)
+  },
+
+  // Milliseconds timestamp
+  T: function (pattern, date, options, options) {
+    var originalDate = options._originalDate || date
+    var timestamp = originalDate.getTime()
+    return addLeadingZeros(seconds, pattern.length)
   },
 }
 

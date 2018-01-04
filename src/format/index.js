@@ -156,7 +156,7 @@ export default function format (dirtyDate, dirtyFormatStr, dirtyOptions) {
 
       var formatter = formatters[firstCharacter]
       if (formatter) {
-        formatter(pattern, date, locale.localize)
+        return formatter(pattern, date, locale.localize, formatterOptions)
       }
 
       return substring
