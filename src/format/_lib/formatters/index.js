@@ -16,19 +16,19 @@ import getUTCISOWeekYear from '../../../_lib/getUTCISOWeekYear/index.js'
  * |  i  |                                |  I  |                              |
  * |  j* | (nothing - not used in format) |  J  |                              |
  * |  k  | Hour [1-24]                    |  K  | Hour [0-11]                  |
- * |  l* | (nothing - deprecated)         |  L* | Stand-alone month            |
+ * |  l* | (nothing - deprecated)         |  L  | Stand-alone month            |
  * |  m  | Minute                         |  M  | Month                        |
  * |  n  |                                |  N  |                              |
  * |  o! | Ordinal number modifier        |  O* | Timezone (GMT)               |
  * |  p  |                                |  P  |                              |
- * |  q* | Stand-alone quarter            |  Q  | Quarter                      |
+ * |  q  | Stand-alone quarter            |  Q  | Quarter                      |
  * |  r  |                                |  R  |                              |
  * |  s  | Second                         |  S  | Fractional second            |
  * |  t! | Seconds timestamp              |  T! | Milliseconds timestamp       |
  * |  u  | Extended year                  |  U* | Cyclic year                  |
  * |  v* | Timezone (generic non-locat.)  |  V* | Timezone (location)          |
  * |  w  | ISO week of year               |  W* | Week of month                |
- * |  x  | Timezone (ISO-8601 w/o Z)      |  X* | Timezone (ISO-8601)          |
+ * |  x  | Timezone (ISO-8601 w/o Z)      |  X  | Timezone (ISO-8601)          |
  * |  y  | Year (abs)                     |  Y  | ISO week-numbering year      |
  * |  z* | Timezone (specific non-locat.) |  Z* | Timezone (aliases)           |
  *
@@ -42,19 +42,19 @@ var formatters = {
   // Era
   G: function (pattern, date, localize) {
     var era = date.getUTCFullYear() > 0 ? 1 : -1
-    switch (pattern) {
+    switch (pattern.length) {
       // AD, BC
-      case 'G':
-      case 'GG':
-      case 'GGG':
-        return localize.era(era, {type: 'short'})
+      case 1:
+      case 2:
+      case 3:
+        return localize.era(era, {width: 'abbreviated'})
       // A, B
-      case 'GGGGG':
-        return localize.era(era, {type: 'narrow'})
+      case 5:
+        return localize.era(era, {width: 'narrow'})
       // Anno Domini, Before Christ
-      case 'GGGG':
+      case 4:
       default:
-        return localize.era(era, {type: 'long'})
+        return localize.era(era, {width: 'wide'})
     }
   },
 
@@ -119,55 +119,88 @@ var formatters = {
   // Quarter
   Q: function (pattern, date, localize) {
     var quarter = Math.ceil((date.getUTCMonth() + 1) / 3)
-    switch (pattern) {
+    switch (pattern.length) {
       // 1, 2, 3, 4
-      case 'Q':
+      case 1:
         return quarter
       // 01, 02, 03, 04
-      case 'QQ':
-        addLeadingZeros(quarter, 2)
+      case 2:
+        return addLeadingZeros(quarter, 2)
       // Q1, Q2, Q3, Q4
-      case 'QQQ':
-        return localize.quarter(era, {type: 'short'})
+      case 3:
+        return localize.quarter(era, {width: 'abbreviated', context: 'formatting'})
       // 1st quarter, 2nd quarter, ...
-      case 'QQQQ':
+      case 4:
       default:
-        return localize.quarter(era, {type: 'long'})
+        return localize.quarter(era, {width: 'wide', context: 'formatting'})
     }
   },
 
-  // TODO: Stand-alone quarter
-  // q: function (pattern, date, localize) {
-  //
-  // },
+  // Stand-alone quarter
+  q: function (pattern, date, localize) {
+    var quarter = Math.ceil((date.getUTCMonth() + 1) / 3)
+    switch (pattern.length) {
+      // 1, 2, 3, 4
+      case 1:
+        return quarter
+      // 01, 02, 03, 04
+      case 2:
+        return addLeadingZeros(quarter, 2)
+      // Q1, Q2, Q3, Q4
+      case 3:
+        return localize.quarter(era, {width: 'abbreviated', context: 'standalone'})
+      // 1st quarter, 2nd quarter, ...
+      case 4:
+      default:
+        return localize.quarter(era, {width: 'wide', context: 'standalone'})
+    }
+  },
 
   // Month
   M: function (pattern, date, localize) {
     var month = date.getUTCMonth()
-    switch (pattern) {
+    switch (pattern.length) {
       // 1, 2, ..., 12
-      case 'M':
+      case 1:
         return month + 1
       // 01, 02, ..., 12
-      case 'MM':
-        addLeadingZeros(month + 1, 2)
+      case 2:
+        return addLeadingZeros(month + 1, 2)
       // Jan, Feb, ..., Dec
-      case 'MMM':
-        return localize.month(era, {type: 'short'})
+      case 3:
+        return localize.month(era, {width: 'abbreviated', context: 'formatting'})
       // J, F, ..., D
-      case 'MMMMM':
-        return localize.month(era, {type: 'narrow'})
+      case 5:
+        return localize.month(era, {width: 'narrow', context: 'formatting'})
       // January, February, ..., December
-      case 'MMMM':
+      case 4:
       default:
-        return localize.month(era, {type: 'long'})
+        return localize.month(era, {width: 'wide', context: 'formatting'})
     }
   },
 
-  // TODO: Stand-alone month
-  // L: function (pattern, date, localize) {
-  //
-  // },
+  // Stand-alone month
+  L: function (pattern, date, localize) {
+    var month = date.getUTCMonth()
+    switch (pattern.length) {
+      // 1, 2, ..., 12
+      case 1:
+        return month + 1
+      // 01, 02, ..., 12
+      case 2:
+        return addLeadingZeros(month + 1, 2)
+      // Jan, Feb, ..., Dec
+      case 3:
+        return localize.month(era, {width: 'abbreviated', context: 'standalone'})
+      // J, F, ..., D
+      case 5:
+        return localize.month(era, {width: 'narrow', context: 'standalone'})
+      // January, February, ..., December
+      case 4:
+      default:
+        return localize.month(era, {width: 'wide', context: 'standalone'})
+    }
+  },
 
   // ISO week of year
   w: function (pattern, date, localize, options) {
@@ -200,23 +233,23 @@ var formatters = {
   // Day of week
   E: function (pattern, date, localize) {
     var dayOfWeek = date.getUTCDay()
-    switch (pattern) {
-      // Tues
-      case 'E':
-      case 'EE':
-      case 'EEE':
-        return localize.weekday(era, {type: 'short'})
+    switch (pattern.length) {
+      // Tue
+      case 1:
+      case 2:
+      case 3:
+        return localize.weekday(era, {width: 'abbreviated', context: 'formatting'})
       // T
-      case 'EEEEE':
+      case 5:
         // TODO: verify type names
-        return localize.month(era, {type: 'oneLetter'})
+        return localize.month(era, {width: 'narrow', context: 'formatting'})
       // Tu
-      case 'EEEEEE':
-        return localize.month(era, {type: 'narrow'})
+      case 6:
+        return localize.month(era, {width: 'short', context: 'formatting'})
       // Tuesday
-      case 'EEEE':
+      case 4:
       default:
-        return localize.month(era, {type: 'long'})
+        return localize.month(era, {width: 'wide', context: 'formatting'})
     }
   },
 
@@ -225,15 +258,35 @@ var formatters = {
   //
   // },
 
-  // TODO: Stand-alone local day of week
-  // c: function (pattern, date, localize) {
-  //
-  // },
+  // Stand-alone local day of week
+  c: function (pattern, date, localize) {
+    var dayOfWeek = date.getUTCDay()
+    switch (pattern.length) {
+      // Numerical value (same as in `e`)
+      case 1:
+      case 2:
+        // TODO: implement
+        return 'TODO'
+      case 3:
+        return localize.weekday(era, {width: 'abbreviated', context: 'standalone'})
+      // T
+      case 5:
+        // TODO: verify type names
+        return localize.month(era, {width: 'narrow', context: 'standalone'})
+      // Tu
+      case 6:
+        return localize.month(era, {width: 'short', context: 'standalone'})
+      // Tuesday
+      case 4:
+      default:
+        return localize.month(era, {width: 'wide', context: 'standalone'})
+    }
+  },
 
   // AM or PM
   a: function (pattern, date, localize) {
     var hours = date.getUTCHours()
-    return localize.timeOfDay(hours, {type: 'uppercase'})
+    return localize.timeOfDay(hours, {width: 'narrow'})
   },
 
   // Hour [1-12]
@@ -329,26 +382,28 @@ var formatters = {
       return 'Z'
     }
 
-    switch (pattern) {
+    switch (pattern.length) {
       // Hours and optional minutes
-      case 'X':
+      case 1:
         if (timezoneOffset % 60 === 0) {
           return addLeadingZeros(timezoneOffset / 60, 2)
         }
         return formatTimezone(timezoneOffset)
 
       // Hours and minutes without `:` delimeter
-      case 'XX':
+      case 2:
       // Hours, minutes and optional seconds without `:` delimeter
       // Note: neither ISO-8601 nor JavaScript supports seconds in timezone offsets
-      // so this pattern has the same output as `XX`
-      case 'XXXX':
+      // so this pattern always has the same output as `XX`
+      case 4:
         return formatTimezone(timezoneOffset)
 
       // Hours and minutes with `:` delimeter
-      case 'XXX':
+      case 3:
       // Hours, minutes and optional seconds with `:` delimeter
-      case 'XXXXX':
+      // Note: neither ISO-8601 nor JavaScript supports seconds in timezone offsets
+      // so this pattern always has the same output as `XXX`
+      case 5:
       default:
         return formatTimezone(timezoneOffse, ':')
     }
@@ -359,26 +414,28 @@ var formatters = {
     var originalDate = options._originalDate || date
     var timezoneOffset = originalData.getTimezoneOffset()
 
-    switch (pattern) {
+    switch (pattern.length) {
       // Hours and optional minutes
-      case 'X':
+      case 1:
         if (timezoneOffset % 60 === 0) {
           return addLeadingZeros(timezoneOffset / 60, 2)
         }
         return formatTimezone(timezoneOffset)
 
       // Hours and minutes without `:` delimeter
-      case 'XX':
+      case 2:
       // Hours, minutes and optional seconds without `:` delimeter
       // Note: neither ISO-8601 nor JavaScript supports seconds in timezone offsets
-      // so this pattern has the same output as `XX`
-      case 'XXXX':
+      // so this pattern always has the same output as `xx`
+      case 4:
         return formatTimezone(timezoneOffset)
 
       // Hours and minutes with `:` delimeter
-      case 'XXX':
+      case 3:
       // Hours, minutes and optional seconds with `:` delimeter
-      case 'XXXXX':
+      // Note: neither ISO-8601 nor JavaScript supports seconds in timezone offsets
+      // so this pattern always has the same output as `xxx`
+      case 5:
       default:
         return formatTimezone(timezoneOffse, ':')
     }
