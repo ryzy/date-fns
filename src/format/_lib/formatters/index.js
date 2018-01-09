@@ -76,24 +76,45 @@ var formatters = {
 
     // Two digit year
     if (pattern.length === 2) {
-      return addLeadingZeros(year, 4).substr(2)
+      var twoDigitYear = year % 100
+      return localize.number(twoDigitYear, {
+        leadingZeros: 2,
+        ordinal: options.ordinal,
+        unit: 'year'
+      })
     }
 
     // Padding
-    return addLeadingZeros(year, pattern.length)
+    return localize.number(year, {
+      leadingZeros: pattern.length,
+      ordinal: options.ordinal,
+      unit: 'year'
+    })
   },
 
   // ISO week-numbering year
   Y: function (pattern, date, localize, options) {
-    var isoWeekYear = getUTCISOWeekYear(date, options)
+    var signedISOWeekYear = getUTCISOWeekYear(date, options)
+
+    // Returns 1 for 1 BC (which is year 0 in JavaScript)
+    var isoWeekYear = signedISOWeekYear > 0 ? signedISOWeekYear : 1 - signedISOWeekYear
 
     // Two digit year
     if (pattern.length === 2) {
-      return addLeadingZeros(isoWeekYear, 4).substr(2)
+      var twoDigitYear = isoWeekYear % 100
+      return localize.number(twoDigitYear, {
+        leadingZeros: 2,
+        ordinal: options.ordinal,
+        unit: 'year'
+      })
     }
 
     // Padding
-    return addLeadingZeros(isoWeekYear, pattern.length)
+    return localize.number(isoWeekYear, {
+      leadingZeros: pattern.length,
+      ordinal: options.ordinal,
+      unit: 'year'
+    })
   },
 
   // Extended year. This is a single number designating the year of this calendar system.
@@ -105,10 +126,13 @@ var formatters = {
   // | BC 2 |   2 |  -1 |
   // Also `yy` always returns the last two digits of a year,
   // while `uu` pads single digit years to 2 characters and returns other years unchanged.
-  u: function (pattern, date, localize) {
+  u: function (pattern, date, localize, options) {
     var year = date.getUTCFullYear()
-    var sign = year >= 0 ? '' : '-'
-    return sign + addLeadingZeros(Math.abs(year), pattern.length)
+    return localize.number(year, {
+      leadingZeros: pattern.length,
+      ordinal: options.ordinal,
+      unit: 'year'
+    })
   },
 
   // TODO: Cyclic year
@@ -122,17 +146,20 @@ var formatters = {
     switch (pattern.length) {
       // 1, 2, 3, 4
       case 1:
-        return quarter
       // 01, 02, 03, 04
       case 2:
-        return addLeadingZeros(quarter, 2)
+        return localize.number(quarter, {
+          leadingZeros: pattern.length,
+          ordinal: options.ordinal,
+          unit: 'quarter'
+        })
       // Q1, Q2, Q3, Q4
       case 3:
-        return localize.quarter(era, {width: 'abbreviated', context: 'formatting'})
+        return localize.quarter(quarter, {width: 'abbreviated', context: 'formatting'})
       // 1st quarter, 2nd quarter, ...
       case 4:
       default:
-        return localize.quarter(era, {width: 'wide', context: 'formatting'})
+        return localize.quarter(quarter, {width: 'wide', context: 'formatting'})
     }
   },
 
@@ -142,17 +169,20 @@ var formatters = {
     switch (pattern.length) {
       // 1, 2, 3, 4
       case 1:
-        return quarter
       // 01, 02, 03, 04
       case 2:
-        return addLeadingZeros(quarter, 2)
+        return localize.number(quarter, {
+          leadingZeros: pattern.length,
+          ordinal: options.ordinal,
+          unit: 'quarter'
+        })
       // Q1, Q2, Q3, Q4
       case 3:
-        return localize.quarter(era, {width: 'abbreviated', context: 'standalone'})
+        return localize.quarter(quarter, {width: 'abbreviated', context: 'standalone'})
       // 1st quarter, 2nd quarter, ...
       case 4:
       default:
-        return localize.quarter(era, {width: 'wide', context: 'standalone'})
+        return localize.quarter(quarter, {width: 'wide', context: 'standalone'})
     }
   },
 
@@ -162,20 +192,23 @@ var formatters = {
     switch (pattern.length) {
       // 1, 2, ..., 12
       case 1:
-        return month + 1
       // 01, 02, ..., 12
       case 2:
-        return addLeadingZeros(month + 1, 2)
+        return localize.number(month + 1, {
+          leadingZeros: pattern.length,
+          ordinal: options.ordinal,
+          unit: 'month'
+        })
       // Jan, Feb, ..., Dec
       case 3:
-        return localize.month(era, {width: 'abbreviated', context: 'formatting'})
+        return localize.month(month, {width: 'abbreviated', context: 'formatting'})
       // J, F, ..., D
       case 5:
-        return localize.month(era, {width: 'narrow', context: 'formatting'})
+        return localize.month(month, {width: 'narrow', context: 'formatting'})
       // January, February, ..., December
       case 4:
       default:
-        return localize.month(era, {width: 'wide', context: 'formatting'})
+        return localize.month(month, {width: 'wide', context: 'formatting'})
     }
   },
 
@@ -185,27 +218,34 @@ var formatters = {
     switch (pattern.length) {
       // 1, 2, ..., 12
       case 1:
-        return month + 1
       // 01, 02, ..., 12
       case 2:
-        return addLeadingZeros(month + 1, 2)
+        return localize.number(month + 1, {
+          leadingZeros: pattern.length,
+          ordinal: options.ordinal,
+          unit: 'month'
+        })
       // Jan, Feb, ..., Dec
       case 3:
-        return localize.month(era, {width: 'abbreviated', context: 'standalone'})
+        return localize.month(month, {width: 'abbreviated', context: 'standalone'})
       // J, F, ..., D
       case 5:
-        return localize.month(era, {width: 'narrow', context: 'standalone'})
+        return localize.month(month, {width: 'narrow', context: 'standalone'})
       // January, February, ..., December
       case 4:
       default:
-        return localize.month(era, {width: 'wide', context: 'standalone'})
+        return localize.month(month, {width: 'wide', context: 'standalone'})
     }
   },
 
   // ISO week of year
   w: function (pattern, date, localize, options) {
     var isoWeek = getUTCISOWeek(date, options)
-    return addLeadingZeros(isoWeek, pattern.length)
+    return localize.number(isoWeek, {
+      leadingZeros: pattern.length,
+      ordinal: options.ordinal,
+      unit: 'week'
+    })
   },
 
   // TODO: Week of month
@@ -216,13 +256,21 @@ var formatters = {
   // Day of the month
   d: function (pattern, date, localize) {
     var dayOfMonth = date.getUTCDate()
-    return addLeadingZeros(dayOfMonth, pattern.length)
+    return localize.number(dayOfMonth, {
+      leadingZeros: pattern.length,
+      ordinal: options.ordinal,
+      unit: 'date'
+    })
   },
 
   // Day of year
   D: function (pattern, date, localize, options) {
     var dayOfYear = getUTCDayOfYear(date, options)
-    return addLeadingZeros(dayOfYear, pattern.length)
+    return localize.number(dayOfYear, {
+      leadingZeros: pattern.length,
+      ordinal: options.ordinal,
+      unit: 'dayOfYear'
+    })
   },
 
   // TODO: Day of week in month (e.g. 2nd Wed in July)
@@ -234,22 +282,22 @@ var formatters = {
   E: function (pattern, date, localize) {
     var dayOfWeek = date.getUTCDay()
     switch (pattern.length) {
-      // Tue
+      // TODO: ISO day of week
       case 1:
       case 2:
+      // Tue
       case 3:
-        return localize.weekday(era, {width: 'abbreviated', context: 'formatting'})
+        return localize.day(dayOfWeek, {width: 'abbreviated', context: 'formatting'})
       // T
       case 5:
-        // TODO: verify type names
-        return localize.month(era, {width: 'narrow', context: 'formatting'})
+        return localize.day(dayOfWeek, {width: 'narrow', context: 'formatting'})
       // Tu
       case 6:
-        return localize.month(era, {width: 'short', context: 'formatting'})
+        return localize.day(dayOfWeek, {width: 'short', context: 'formatting'})
       // Tuesday
       case 4:
       default:
-        return localize.month(era, {width: 'wide', context: 'formatting'})
+        return localize.day(dayOfWeek, {width: 'wide', context: 'formatting'})
     }
   },
 
@@ -268,18 +316,18 @@ var formatters = {
         // TODO: implement
         return 'TODO'
       case 3:
-        return localize.weekday(era, {width: 'abbreviated', context: 'standalone'})
+        return localize.day(dayOfWeek, {width: 'abbreviated', context: 'standalone'})
       // T
       case 5:
         // TODO: verify type names
-        return localize.month(era, {width: 'narrow', context: 'standalone'})
+        return localize.day(dayOfWeek, {width: 'narrow', context: 'standalone'})
       // Tu
       case 6:
-        return localize.month(era, {width: 'short', context: 'standalone'})
+        return localize.day(dayOfWeek, {width: 'short', context: 'standalone'})
       // Tuesday
       case 4:
       default:
-        return localize.month(era, {width: 'wide', context: 'standalone'})
+        return localize.day(dayOfWeek, {width: 'wide', context: 'standalone'})
     }
   },
 
@@ -297,19 +345,31 @@ var formatters = {
       hours = 12
     }
 
-    return addLeadingZeros(hours, pattern.length)
+    return localize.number(hours, {
+      leadingZeros: pattern.length,
+      ordinal: options.ordinal,
+      unit: 'hours'
+    })
   },
 
   // Hour [0-23]
   H: function (pattern, date, localize) {
     var hours = date.getUTCHours()
-    return addLeadingZeros(hours, pattern.length)
+    return localize.number(hours, {
+      leadingZeros: pattern.length,
+      ordinal: options.ordinal,
+      unit: 'hours'
+    })
   },
 
   // Hour [0-11]
   K: function (pattern, date, localize) {
     var hours = date.getUTCHours() % 12
-    return addLeadingZeros(hours, pattern.length)
+    return localize.number(hours, {
+      leadingZeros: pattern.length,
+      ordinal: options.ordinal,
+      unit: 'hours'
+    })
   },
 
   // Hour [1-24]
@@ -320,19 +380,31 @@ var formatters = {
       hours = 24
     }
 
-    return addLeadingZeros(hours, pattern.length)
+    return localize.number(hours, {
+      leadingZeros: pattern.length,
+      ordinal: options.ordinal,
+      unit: 'hours'
+    })
   },
 
   // Minute
   m: function (pattern, date, localize) {
     var minutes = date.getUTCMinutes()
-    return addLeadingZeros(minutes, pattern.length)
+    return localize.number(minutes, {
+      leadingZeros: pattern.length,
+      ordinal: options.ordinal,
+      unit: 'minutes'
+    })
   },
 
   // Second
   s: function (pattern, date, localize) {
     var seconds = date.getUTCSeconds()
-    return addLeadingZeros(seconds, pattern.length)
+    return localize.number(seconds, {
+      leadingZeros: pattern.length,
+      ordinal: options.ordinal,
+      unit: 'seconds'
+    })
   },
 
   // Fractional second
@@ -340,7 +412,11 @@ var formatters = {
     var numberOfDigits = pattern.length
     var milliseconds = date.getUTCMilliseconds()
     var fractionalSeconds = Math.floor(milliseconds * Math.pow(10, numberOfDigits - 3))
-    return addLeadingZeros(fractionalSeconds, numberOfDigits.length)
+    return localize.number(fractionalSeconds, {
+      leadingZeros: numberOfDigits,
+      ordinal: options.ordinal,
+      unit: 'fractionalSeconds'
+    })
   },
 
   // TODO: Milliseconds in day
@@ -374,7 +450,7 @@ var formatters = {
   // },
 
   // Timezone (ISO-8601. If offset is 0, output is always `'Z'`)
-  X: function (pattern, date, localize) {
+  X: function (pattern, date, localize, options) {
     var originalDate = options._originalDate || date
     var timezoneOffset = originalData.getTimezoneOffset()
 
@@ -386,9 +462,11 @@ var formatters = {
       // Hours and optional minutes
       case 1:
         if (timezoneOffset % 60 === 0) {
-          return addLeadingZeros(timezoneOffset / 60, 2)
+          return localize.number(timezoneOffset / 60, {
+            leadingZeros: 2
+          })
         }
-        return formatTimezone(timezoneOffset)
+        return formatTimezone(timezoneOffset, localize)
 
       // Hours and minutes without `:` delimeter
       case 2:
@@ -396,7 +474,7 @@ var formatters = {
       // Note: neither ISO-8601 nor JavaScript supports seconds in timezone offsets
       // so this pattern always has the same output as `XX`
       case 4:
-        return formatTimezone(timezoneOffset)
+        return formatTimezone(timezoneOffset, localize)
 
       // Hours and minutes with `:` delimeter
       case 3:
@@ -405,7 +483,7 @@ var formatters = {
       // so this pattern always has the same output as `XXX`
       case 5:
       default:
-        return formatTimezone(timezoneOffse, ':')
+        return formatTimezone(timezoneOffset, localize, {delimeter: ':'})
     }
   },
 
@@ -418,9 +496,11 @@ var formatters = {
       // Hours and optional minutes
       case 1:
         if (timezoneOffset % 60 === 0) {
-          return addLeadingZeros(timezoneOffset / 60, 2)
+          return localize.number(timezoneOffset / 60, {
+            leadingZeros: 2
+          })
         }
-        return formatTimezone(timezoneOffset)
+        return formatTimezone(timezoneOffset, localize)
 
       // Hours and minutes without `:` delimeter
       case 2:
@@ -428,7 +508,7 @@ var formatters = {
       // Note: neither ISO-8601 nor JavaScript supports seconds in timezone offsets
       // so this pattern always has the same output as `xx`
       case 4:
-        return formatTimezone(timezoneOffset)
+        return formatTimezone(timezoneOffset, localize)
 
       // Hours and minutes with `:` delimeter
       case 3:
@@ -437,7 +517,7 @@ var formatters = {
       // so this pattern always has the same output as `xxx`
       case 5:
       default:
-        return formatTimezone(timezoneOffse, ':')
+        return formatTimezone(timezoneOffset, localize, {delimeter: ':'})
     }
   },
 
@@ -447,32 +527,25 @@ var formatters = {
   t: function (pattern, date, localize, options) {
     var originalDate = options._originalDate || date
     var timestamp = Math.floor(originalDate.getTime() / 1000)
-    return addLeadingZeros(seconds, pattern.length)
+    return localize.number(timestamp, {leadingZeros: pattern.length})
   },
 
   // Milliseconds timestamp
   T: function (pattern, date, options, options) {
     var originalDate = options._originalDate || date
     var timestamp = originalDate.getTime()
-    return addLeadingZeros(seconds, pattern.length)
+    return localize.number(timestamp, {leadingZeros: pattern.length})
   },
 }
 
-function formatTimezone (offset, delimeter) {
-  delimeter = delimeter || ''
+function formatTimezone (offset, localize, dirtyOptions) {
+  var options = dirtyOptions || {}
+  var delimeter = options.delimeter || ''
   var sign = offset > 0 ? '-' : '+'
   var absOffset = Math.abs(offset)
-  var hours = Math.floor(absOffset / 60)
-  var minutes = absOffset % 60
-  return sign + addLeadingZeros(hours, 2) + delimeter + addLeadingZeros(minutes, 2)
-}
-
-function addLeadingZeros (number, targetLength) {
-  var output = Math.abs(number).toString()
-  while (output.length < targetLength) {
-    output = '0' + output
-  }
-  return output
+  var hours = localize.number(Math.floor(absOffset / 60), {leadingZeros: 2})
+  var minutes = localize.number(absOffset % 60, {leadingZeros: 2})
+  return sign + hours + delimeter + minutes
 }
 
 export default formatters

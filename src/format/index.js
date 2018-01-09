@@ -84,7 +84,8 @@ var escapedStringRegExp = /'?(.*)('|$)/
  * |                         | LLLL  | Sunday, July 2 1995 05:30 a.m.   |
  * |                         | llll  | Sun, Jul 2 1995 05:30 a.m.       |
  *
- * The characters wrapped in square brackets are escaped.
+ * The characters wrapped between two single quotes characters (') are escaped.
+ * Two single quotes in a row, whether inside or outside a quoted sequence, represent a 'real' single quote.
  *
  * The result may vary by locale.
  *
